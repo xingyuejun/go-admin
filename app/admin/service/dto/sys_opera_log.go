@@ -1,14 +1,14 @@
 package dto
 
 import (
+	"time"
+
 	"github.com/gin-gonic/gin"
+	"github.com/go-admin-team/go-admin-core/sdk/api"
+
 	"go-admin/app/admin/models/system"
 	"go-admin/common/dto"
-	"go-admin/common/log"
 	common "go-admin/common/models"
-	"go-admin/tools"
-
-	"time"
 )
 
 type SysOperaLogSearch struct {
@@ -26,16 +26,16 @@ func (m *SysOperaLogSearch) GetNeedSearch() interface{} {
 }
 
 func (m *SysOperaLogSearch) Bind(ctx *gin.Context) error {
-	msgID := tools.GenerateMsgIDFromContext(ctx)
+	log := api.GetRequestLogger(ctx)
 	err := ctx.ShouldBind(m)
 	if err != nil {
-		log.Debugf("MsgID[%s] ShouldBind error: %s", msgID, err.Error())
+		log.Debugf("ShouldBind error: %s", err.Error())
 	}
 	return err
 }
 
 type SysOperaLogControl struct {
-	ID            int       `uri:"ID" comment:"编码"` // 编码
+	ID            int       `uri:"Id" comment:"编码"` // 编码
 	Title         string    `json:"title" comment:"操作模块"`
 	BusinessType  string    `json:"businessType" comment:"操作类型"`
 	BusinessTypes string    `json:"businessTypes" comment:""`
@@ -57,22 +57,22 @@ type SysOperaLogControl struct {
 }
 
 func (s *SysOperaLogControl) Bind(ctx *gin.Context) error {
-	msgID := tools.GenerateMsgIDFromContext(ctx)
+	log := api.GetRequestLogger(ctx)
 	err := ctx.ShouldBindUri(s)
 	if err != nil {
-		log.Debugf("MsgID[%s] ShouldBindUri error: %s", msgID, err.Error())
+		log.Debugf("ShouldBindUri error: %s", err.Error())
 		return err
 	}
 	err = ctx.ShouldBind(s)
 	if err != nil {
-		log.Debugf("MsgID[%s] ShouldBind error: %#v", msgID, err.Error())
+		log.Debugf("ShouldBind error: %s", err.Error())
 	}
 	return err
 }
 
 func (s *SysOperaLogControl) Generate() (*system.SysOperaLog, error) {
 	return &system.SysOperaLog{
-		Model:         common.Model{ID: s.ID},
+		Model:         common.Model{Id: s.ID},
 		Title:         s.Title,
 		BusinessType:  s.BusinessType,
 		BusinessTypes: s.BusinessTypes,
@@ -112,15 +112,15 @@ func (s *SysOperaLogById) GetId() interface{} {
 }
 
 func (s *SysOperaLogById) Bind(ctx *gin.Context) error {
-	msgID := tools.GenerateMsgIDFromContext(ctx)
+	log := api.GetRequestLogger(ctx)
 	err := ctx.ShouldBindUri(s)
 	if err != nil {
-		log.Debugf("MsgID[%s] ShouldBindUri error: %s", msgID, err.Error())
+		log.Debugf("ShouldBindUri error: %s", err.Error())
 		return err
 	}
 	err = ctx.ShouldBind(&s.Ids)
 	if err != nil {
-		log.Debugf("MsgID[%s] ShouldBind error: %#v", msgID, err.Error())
+		log.Debugf("ShouldBind error: %s", err.Error())
 	}
 	return err
 }

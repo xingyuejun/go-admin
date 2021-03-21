@@ -2,11 +2,10 @@ package system
 
 import (
 	"fmt"
+	"github.com/go-admin-team/go-admin-core/sdk/pkg"
+
 	"github.com/casbin/casbin/v2"
 	"gorm.io/gorm"
-
-	"go-admin/app/admin/models"
-	"go-admin/tools"
 )
 
 type RoleMenu struct {
@@ -39,7 +38,7 @@ func (rm *RoleMenu) Get(tx *gorm.DB) ([]RoleMenu, error) {
 }
 
 func (rm *RoleMenu) GetPermis(tx *gorm.DB) ([]string, error) {
-	var r []models.Menu
+	var r []SysMenu
 	table := tx.Select("sys_menu.permission").Table("sys_menu").Joins("left join sys_role_menu on sys_menu.menu_id = sys_role_menu.menu_id")
 
 	table = table.Where("role_id = ?", rm.RoleId)
@@ -113,8 +112,8 @@ func (rm *RoleMenu) Insert(tx *gorm.DB, enforcer *casbin.SyncedEnforcer, roleId 
 	var err error
 	var (
 		role        SysRole
-		menu        []models.Menu
-		casbinRules []models.CasbinRule // casbinRule 待插入队列
+		menu        []SysMenu
+		casbinRules []CasbinRule // casbinRule 待插入队列
 	)
 	// 在事务中做一些数据库操作（从这一点使用'tx'，而不是'db'）
 	if err = tx.Table("sys_role").Where("role_id = ?", roleId).First(&role).Error; err != nil {
@@ -137,7 +136,7 @@ func (rm *RoleMenu) Insert(tx *gorm.DB, enforcer *casbin.SyncedEnforcer, roleId 
 		if m.MenuType == "A" {
 			// 加入队列
 			casbinRules = append(casbinRules,
-				models.CasbinRule{
+				CasbinRule{
 					V0: role.RoleKey,
 					V1: m.Path,
 					V2: m.Action,
@@ -159,7 +158,7 @@ func (rm *RoleMenu) Insert(tx *gorm.DB, enforcer *casbin.SyncedEnforcer, roleId 
 }
 
 func (rm *RoleMenu) Delete(tx *gorm.DB, RoleId string, MenuID string) (bool, error) {
-	rm.RoleId, _ = tools.StringToInt(RoleId)
+	rm.RoleId, _ = pkg.StringToInt(RoleId)
 	table := tx.Table("sys_role_menu").Where("role_id = ?", RoleId)
 	if MenuID != "" {
 		table = table.Where("menu_id = ?", MenuID)

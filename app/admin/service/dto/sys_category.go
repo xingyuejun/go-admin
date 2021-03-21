@@ -2,11 +2,11 @@ package dto
 
 import (
 	"github.com/gin-gonic/gin"
+	"github.com/go-admin-team/go-admin-core/sdk/api"
+
 	"go-admin/app/admin/models"
 	"go-admin/common/dto"
-	"go-admin/common/log"
 	common "go-admin/common/models"
-	"go-admin/tools"
 )
 
 type SysCategorySearch struct {
@@ -21,10 +21,10 @@ func (m *SysCategorySearch) GetNeedSearch() interface{} {
 }
 
 func (m *SysCategorySearch) Bind(ctx *gin.Context) error {
-	msgID := tools.GenerateMsgIDFromContext(ctx)
+	log := api.GetRequestLogger(ctx)
 	err := ctx.ShouldBind(m)
 	if err != nil {
-		log.Debugf("MsgID[%s] ShouldBind error: %s", msgID, err.Error())
+		log.Debugf("ShouldBind error: %s", err.Error())
 	}
 	return err
 }
@@ -35,7 +35,7 @@ func (m *SysCategorySearch) Generate() dto.Index {
 }
 
 type SysCategoryControl struct {
-	ID int `uri:"ID" comment:"标识"` // 标识
+	ID int `uri:"Id" comment:"标识"` // 标识
 
 	Name string `json:"name" comment:"名称"`
 
@@ -49,15 +49,15 @@ type SysCategoryControl struct {
 }
 
 func (s *SysCategoryControl) Bind(ctx *gin.Context) error {
-	msgID := tools.GenerateMsgIDFromContext(ctx)
+	log := api.GetRequestLogger(ctx)
 	err := ctx.ShouldBindUri(s)
 	if err != nil {
-		log.Debugf("MsgID[%s] ShouldBindUri error: %s", msgID, err.Error())
+		log.Debugf("ShouldBindUri error: %s", err.Error())
 		return err
 	}
 	err = ctx.ShouldBind(s)
 	if err != nil {
-		log.Debugf("MsgID[%s] ShouldBind error: %#v", msgID, err.Error())
+		log.Debugf("ShouldBind error: %s", err.Error())
 	}
 	return err
 }
@@ -69,7 +69,7 @@ func (s *SysCategoryControl) Generate() dto.Control {
 
 func (s *SysCategoryControl) GenerateM() (common.ActiveRecord, error) {
 	return &models.SysCategory{
-		Model:  common.Model{ID: s.ID},
+		Model:  common.Model{Id: s.ID},
 		Name:   s.Name,
 		Img:    s.Img,
 		Sort:   s.Sort,

@@ -2,12 +2,11 @@ package models
 
 import (
 	"fmt"
+	"go-admin/common/global"
 	"gorm.io/gorm"
 	"io/ioutil"
 	"log"
 	"strings"
-
-	"go-admin/common/global"
 )
 
 func InitDb(db *gorm.DB) (err error) {

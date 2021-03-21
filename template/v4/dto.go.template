@@ -2,12 +2,11 @@ package dto
 
 import (
 	"github.com/gin-gonic/gin"
-	"gorm.io/gorm"
+	"github.com/go-admin-team/go-admin-core/sdk/api"
 
-	"go-admin/app/admin/models"
+	"go-admin/app/{{.PackageName}}/models"
 	"go-admin/common/dto"
-	"go-admin/common/log"
-	"go-admin/tools"
+	common "go-admin/common/models"
 )
 
 type {{.ClassName}}Search struct {
@@ -17,7 +16,6 @@ type {{.ClassName}}Search struct {
     {{$z := .IsQuery}}
     {{- if ($z) -}}
     {{.GoField}} {{.GoType}} `form:"{{.JsonField}}" search:"type:{{if eq .QueryType "EQ"}}exact{{ else if eq .QueryType "NE"}}iexact{{ else if eq .QueryType "LIKE"}}contains{{ else if eq .QueryType "GT"}}gt{{ else if eq .QueryType "GTE"}}gte{{ else if eq .QueryType "LT"}}lt{{ else if eq .QueryType "LTE"}}lte{{- end }};column:{{.ColumnName}};table:{{$tablename}}" comment:"{{.ColumnComment}}"`
-
     {{ end -}}
     {{- end }}
 }
@@ -26,11 +24,16 @@ func (m *{{.ClassName}}Search) GetNeedSearch() interface{} {
 	return *m
 }
 
+func (m *{{.ClassName}}Search) Generate() dto.Index {
+	o := *m
+	return &o
+}
+
 func (m *{{.ClassName}}Search) Bind(ctx *gin.Context) error {
-    msgID := tools.GenerateMsgIDFromContext(ctx)
+	log := api.GetRequestLogger(ctx)
     err := ctx.ShouldBind(m)
     if err != nil {
-    	log.Debugf("MsgID[%s] ShouldBind error: %s", msgID, err.Error())
+    	log.Debugf("ShouldBind error: %s", err.Error())
     }
     return err
 }
@@ -45,40 +48,41 @@ type {{.ClassName}}Control struct {
     {{- else if eq .GoField "DeletedAt" -}}
     {{- else if eq .GoField "CreateBy" -}}
     {{- else if eq .GoField "UpdateBy" -}}
-
     {{- else }}
-
     {{.GoField}} {{.GoType}} `json:"{{.JsonField}}" comment:"{{.ColumnComment}}"`
     {{end -}}
     {{- end }}
 }
 
+func (s *{{.ClassName}}Control) Generate() dto.Control {
+	o := *s
+	return &o
+}
+
 func (s *{{.ClassName}}Control) Bind(ctx *gin.Context) error {
-    msgID := tools.GenerateMsgIDFromContext(ctx)
+	log := api.GetRequestLogger(ctx)
     err := ctx.ShouldBindUri(s)
     if err != nil {
-        log.Debugf("MsgID[%s] ShouldBindUri error: %s", msgID, err.Error())
+        log.Debugf("ShouldBindUri error: %s", err.Error())
         return err
     }
     err = ctx.ShouldBind(s)
     if err != nil {
-        log.Debugf("MsgID[%s] ShouldBind error: %#v", msgID, err.Error())
+        log.Debugf("ShouldBind error: %s", err.Error())
     }
     return err
 }
 
-func (s *{{.ClassName}}Control) Generate() (*models.{{.ClassName}}, error) {
+func (s *{{.ClassName}}Control) GenerateM() (common.ActiveRecord, error) {
 	return &models.{{.ClassName}}{
 	{{ range .Columns -}}
         {{$x := .Pk}}
         {{- if ($x) }}
-        Model:     gorm.Model{ID: s.ID},
+        Model:     common.Model{ {{.GoField}}: s.{{.GoField}} },
         {{- else if eq .GoField "CreatedAt" -}}
         {{- else if eq .GoField "UpdatedAt" -}}
         {{- else if eq .GoField "DeletedAt" -}}
         {{- else if eq .GoField "CreateBy" -}}
-
-
         {{- else if eq .GoField "UpdateBy" -}}
         {{- else }}
         {{.GoField}}:  s.{{.GoField}},
@@ -92,8 +96,7 @@ func (s *{{.ClassName}}Control) GetId() interface{} {
 }
 
 type {{.ClassName}}ById struct {
-	Id  int   `uri:"id"`
-	Ids []int `json:"ids"`
+	dto.ObjectById
 }
 
 func (s *{{.ClassName}}ById) GetId() interface{} {
@@ -105,19 +108,28 @@ func (s *{{.ClassName}}ById) GetId() interface{} {
 }
 
 func (s *{{.ClassName}}ById) Bind(ctx *gin.Context) error {
-	msgID := tools.GenerateMsgIDFromContext(ctx)
+	log := api.GetRequestLogger(ctx)
 	err := ctx.ShouldBindUri(s)
 	if err != nil {
-		log.Debugf("MsgID[%s] ShouldBindUri error: %s", msgID, err.Error())
+		log.Debugf("ShouldBindUri error: %s", err.Error())
 		return err
 	}
 	err = ctx.ShouldBind(s)
 	if err != nil {
-		log.Debugf("MsgID[%s] ShouldBind error: %#v", msgID, err.Error())
+		log.Debugf("ShouldBind error: %s", err.Error())
 	}
 	return err
 }
 
 func (s *{{.ClassName}}ById) SetUpdateBy(id int) {
 
+}
+
+func (s *{{.ClassName}}ById) Generate() dto.Control {
+	o := *s
+	return &o
+}
+
+func (s *{{.ClassName}}ById) GenerateM() (common.ActiveRecord, error) {
+	return &models.{{.ClassName}}{}, nil
 }

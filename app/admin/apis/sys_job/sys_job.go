@@ -1,14 +1,13 @@
 package sys_job
 
 import (
-	"github.com/gin-gonic/gin"
+	"net/http"
 
+	"github.com/gin-gonic/gin"
+	"github.com/go-admin-team/go-admin-core/sdk"
 	"go-admin/app/admin/service"
 	"go-admin/common/apis"
 	"go-admin/common/dto"
-	"go-admin/common/log"
-	"go-admin/tools"
-	"go-admin/tools/app"
 )
 
 type SysJob struct {
@@ -17,54 +16,56 @@ type SysJob struct {
 
 // RemoveJobForService 调用service实现
 func (e *SysJob) RemoveJobForService(c *gin.Context) {
-	msgID := tools.GenerateMsgIDFromContext(c)
+	log := e.GetLogger(c)
 	db, err := e.GetOrm(c)
 	if err != nil {
-		log.Errorf("msgID[%s] error:%s", msgID, err)
-		app.Error(c, 500, err, "")
+		log.Error(err)
 		return
 	}
 	var v dto.GeneralDelDto
 	err = c.BindUri(&v)
 	if err != nil {
-		log.Errorf("msgID[%s] 参数验证错误, error:%s", msgID, err)
-		app.Error(c, 422, err, "参数验证失败")
+		log.Warnf("参数验证错误, error: %s", err)
+		e.Error(c, http.StatusUnprocessableEntity, err, "参数验证失败")
 		return
 	}
 	s := service.SysJob{}
-	s.MsgID = msgID
+	s.Log = log
 	s.Orm = db
+	s.Cron = sdk.Runtime.GetCrontabKey(c.Request.Host)
 	err = s.RemoveJob(&v)
 	if err != nil {
-		app.Error(c, 500, err, "")
+		log.Errorf("RemoveJob error, %s", err.Error())
+		e.Error(c, http.StatusInternalServerError, err, "")
 		return
 	}
-	app.OK(c, nil, s.Msg)
+	e.OK(c, nil, s.Msg)
 }
 
 // StartJobForService 启动job service实现
 func (e *SysJob) StartJobForService(c *gin.Context) {
-	msgID := tools.GenerateMsgIDFromContext(c)
+	log := e.GetLogger(c)
 	db, err := e.GetOrm(c)
 	if err != nil {
-		log.Errorf("msgID[%s] error:%s", msgID, err)
-		app.Error(c, 500, err, "")
+		log.Error(err)
 		return
 	}
 	var v dto.GeneralGetDto
 	err = c.BindUri(&v)
 	if err != nil {
-		log.Errorf("msgID[%s] 参数验证错误, error:%s", msgID, err)
-		app.Error(c, 422, err, "参数验证失败")
+		log.Warnf("参数验证错误, error: %s", err)
+		e.Error(c, http.StatusUnprocessableEntity, err, "参数验证失败")
 		return
 	}
 	s := service.SysJob{}
 	s.Orm = db
-	s.MsgID = msgID
+	s.Log = log
+	s.Cron = sdk.Runtime.GetCrontabKey(c.Request.Host)
 	err = s.StartJob(&v)
 	if err != nil {
-		app.Error(c, 500, err, "")
+		log.Errorf("GetCrontabKey error, %s", err.Error())
+		e.Error(c, http.StatusInternalServerError, err, "")
 		return
 	}
-	app.OK(c, nil, s.Msg)
+	e.OK(c, nil, s.Msg)
 }

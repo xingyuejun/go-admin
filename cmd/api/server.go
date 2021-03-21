@@ -3,6 +3,9 @@ package api
 import (
 	"context"
 	"fmt"
+	"github.com/go-admin-team/go-admin-core/sdk"
+	"github.com/go-admin-team/go-admin-core/sdk/pkg"
+	"log"
 	"net/http"
 	"os"
 	"os/signal"
@@ -12,14 +15,12 @@ import (
 	"github.com/go-admin-team/go-admin-core/config/source/file"
 	"github.com/spf13/cobra"
 
+	"github.com/go-admin-team/go-admin-core/sdk/config"
+	"github.com/go-admin-team/go-admin-core/sdk/pkg/logger"
 	"go-admin/app/admin/router"
 	"go-admin/app/jobs"
 	"go-admin/common/database"
 	"go-admin/common/global"
-	"go-admin/common/log"
-	"go-admin/pkg/logger"
-	"go-admin/tools"
-	"go-admin/tools/config"
 )
 
 var (
@@ -53,24 +54,28 @@ func setup() {
 	config.Setup(file.NewSource, file.WithPath(configYml))
 	go config.Watch()
 	//2. 设置日志
-	global.Logger.Logger = logger.SetupLogger(config.LoggerConfig.Path, "bus")
-	global.JobLogger.Logger = logger.SetupLogger(config.LoggerConfig.Path, "job")
-	global.RequestLogger.Logger = logger.SetupLogger(config.LoggerConfig.Path, "request")
+	sdk.Runtime.SetLogger(
+		logger.SetupLogger(
+			config.LoggerConfig.Type,
+			config.LoggerConfig.Path,
+			config.LoggerConfig.Level,
+			config.LoggerConfig.Stdout))
 	//3. 初始化数据库链接
 	database.Setup()
+	//4. 设置缓存
+	sdk.Runtime.SetCacheAdapter(config.CacheConfig.Setup())
 
-	usageStr := `starting api server`
-	log.Info(usageStr)
-
+	usageStr := `starting api server...`
+	log.Println(usageStr)
 }
 
 func run() error {
 	defer config.Stop()
 
-	if config.ApplicationConfig.Mode == tools.ModeProd.String() {
+	if config.ApplicationConfig.Mode == pkg.ModeProd.String() {
 		gin.SetMode(gin.ReleaseMode)
 	}
-	engine := global.Cfg.GetEngine()
+	engine := sdk.Runtime.GetEngine()
 	if engine == nil {
 		engine = gin.New()
 	}
@@ -86,11 +91,11 @@ func run() error {
 
 	srv := &http.Server{
 		Addr:    fmt.Sprintf("%s:%d", config.ApplicationConfig.Host, config.ApplicationConfig.Port),
-		Handler: global.Cfg.GetEngine(),
+		Handler: sdk.Runtime.GetEngine(),
 	}
 	go func() {
 		jobs.InitJob()
-		jobs.Setup()
+		jobs.Setup(sdk.Runtime.GetDb())
 
 	}()
 
@@ -109,30 +114,30 @@ func run() error {
 			}
 		}
 	}()
-	fmt.Println(tools.Red(string(global.LogoContent)))
+	fmt.Println(pkg.Red(string(global.LogoContent)))
 	tip()
-	fmt.Println(tools.Green("Server run at:"))
+	fmt.Println(pkg.Green("Server run at:"))
 	fmt.Printf("-  Local:   http://localhost:%d/ \r\n", config.ApplicationConfig.Port)
-	fmt.Printf("-  Network: http://%s:%d/ \r\n", tools.GetLocaHonst(), config.ApplicationConfig.Port)
-	fmt.Println(tools.Green("Swagger run at:"))
+	fmt.Printf("-  Network: http://%s:%d/ \r\n", pkg.GetLocaHonst(), config.ApplicationConfig.Port)
+	fmt.Println(pkg.Green("Swagger run at:"))
 	fmt.Printf("-  Local:   http://localhost:%d/swagger/index.html \r\n", config.ApplicationConfig.Port)
-	fmt.Printf("-  Network: http://%s:%d/swagger/index.html \r\n", tools.GetLocaHonst(), config.ApplicationConfig.Port)
-	fmt.Printf("%s Enter Control + C Shutdown Server \r\n", tools.GetCurrentTimeStr())
+	fmt.Printf("-  Network: http://%s:%d/swagger/index.html \r\n", pkg.GetLocaHonst(), config.ApplicationConfig.Port)
+	fmt.Printf("%s Enter Control + C Shutdown Server \r\n", pkg.GetCurrentTimeStr())
 	// 等待中断信号以优雅地关闭服务器（设置 5 秒的超时时间）
 	quit := make(chan os.Signal)
 	signal.Notify(quit, os.Interrupt)
 	<-quit
-	fmt.Printf("%s Shutdown Server ... \r\n", tools.GetCurrentTimeStr())
+	fmt.Printf("%s Shutdown Server ... \r\n", pkg.GetCurrentTimeStr())
 
 	if err := srv.Shutdown(ctx); err != nil {
 		log.Fatal("Server Shutdown:", err)
 	}
-	log.Info("Server exiting")
+	log.Println("Server exiting")
 
 	return nil
 }
 
 func tip() {
-	usageStr := `欢迎使用 ` + tools.Green(`go-admin `+global.Version) + ` 可以使用 ` + tools.Red(`-h`) + ` 查看命令`
+	usageStr := `欢迎使用 ` + pkg.Green(`go-admin `+global.Version) + ` 可以使用 ` + pkg.Red(`-h`) + ` 查看命令`
 	fmt.Printf("%s \n\n", usageStr)
 }

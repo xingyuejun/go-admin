@@ -2,18 +2,17 @@ package global
 
 import (
 	"github.com/casbin/casbin/v2"
-	"github.com/casbin/casbin/v2/log"
 	"github.com/gin-gonic/gin"
-
-	"go-admin/tools"
+	"github.com/go-admin-team/go-admin-core/sdk"
+	"github.com/go-admin-team/go-admin-core/sdk/api"
 )
 
 func LoadPolicy(c *gin.Context) (*casbin.SyncedEnforcer, error) {
-	if err := Cfg.GetCasbinKey(c.Request.Host).LoadPolicy(); err == nil {
-		return Cfg.GetCasbinKey(c.Request.Host), err
+	log := api.GetRequestLogger(c)
+	if err := sdk.Runtime.GetCasbinKey(c.Request.Host).LoadPolicy(); err == nil {
+		return sdk.Runtime.GetCasbinKey(c.Request.Host), err
 	} else {
-		msgID := tools.GenerateMsgIDFromContext(c)
-		log.LogPrintf("msgID[%s] casbin rbac_model or policy init error, message: %v \r\n", msgID, err.Error())
+		log.Errorf("casbin rbac_model or policy init error, %s ", err.Error())
 		return nil, err
 	}
 }

@@ -1,16 +1,15 @@
 package sys_opera_log
 
 import (
+	"net/http"
+
 	"github.com/gin-gonic/gin"
+	"github.com/go-admin-team/go-admin-core/sdk/pkg/jwtauth/user"
 
 	"go-admin/app/admin/models/system"
 	"go-admin/app/admin/service"
 	"go-admin/app/admin/service/dto"
 	"go-admin/common/apis"
-	"go-admin/common/log"
-	"go-admin/tools"
-
-	"net/http"
 )
 
 type SysOperaLog struct {
@@ -18,9 +17,9 @@ type SysOperaLog struct {
 }
 
 func (e *SysOperaLog) GetSysOperaLogList(c *gin.Context) {
-	msgID := tools.GenerateMsgIDFromContext(c)
+	log := e.GetLogger(c)
 	d := new(dto.SysOperaLogSearch)
-	db, err := tools.GetOrm(c)
+	db, err := e.GetOrm(c)
 	if err != nil {
 		log.Error(err)
 		return
@@ -36,7 +35,7 @@ func (e *SysOperaLog) GetSysOperaLogList(c *gin.Context) {
 	list := make([]system.SysOperaLog, 0)
 	var count int64
 	serviceStudent := service.SysOperaLog{}
-	serviceStudent.MsgID = msgID
+	serviceStudent.Log = log
 	serviceStudent.Orm = db
 	err = serviceStudent.GetSysOperaLogPage(d, &list, &count)
 	if err != nil {
@@ -48,14 +47,14 @@ func (e *SysOperaLog) GetSysOperaLogList(c *gin.Context) {
 }
 
 func (e *SysOperaLog) GetSysOperaLog(c *gin.Context) {
+	log := e.GetLogger(c)
 	control := new(dto.SysOperaLogById)
-	db, err := tools.GetOrm(c)
+	db, err := e.GetOrm(c)
 	if err != nil {
 		log.Error(err)
 		return
 	}
 
-	msgID := tools.GenerateMsgIDFromContext(c)
 	//查看详情
 	err = control.Bind(c)
 	if err != nil {
@@ -65,7 +64,7 @@ func (e *SysOperaLog) GetSysOperaLog(c *gin.Context) {
 	var object system.SysOperaLog
 
 	serviceSysOperlog := service.SysOperaLog{}
-	serviceSysOperlog.MsgID = msgID
+	serviceSysOperlog.Log = log
 	serviceSysOperlog.Orm = db
 	err = serviceSysOperlog.GetSysOperaLog(control, &object)
 	if err != nil {
@@ -77,14 +76,14 @@ func (e *SysOperaLog) GetSysOperaLog(c *gin.Context) {
 }
 
 func (e *SysOperaLog) InsertSysOperaLog(c *gin.Context) {
+	log := e.GetLogger(c)
 	control := new(dto.SysOperaLogControl)
-	db, err := tools.GetOrm(c)
+	db, err := e.GetOrm(c)
 	if err != nil {
 		log.Error(err)
 		return
 	}
 
-	msgID := tools.GenerateMsgIDFromContext(c)
 	//新增操作
 	err = control.Bind(c)
 	if err != nil {
@@ -97,11 +96,11 @@ func (e *SysOperaLog) InsertSysOperaLog(c *gin.Context) {
 		return
 	}
 	// 设置创建人
-	object.SetCreateBy(tools.GetUserId(c))
+	object.SetCreateBy(user.GetUserId(c))
 
 	serviceSysOperaLog := service.SysOperaLog{}
 	serviceSysOperaLog.Orm = db
-	serviceSysOperaLog.MsgID = msgID
+	serviceSysOperaLog.Log = log
 	err = serviceSysOperaLog.InsertSysOperaLog(object)
 	if err != nil {
 		log.Error(err)
@@ -113,14 +112,14 @@ func (e *SysOperaLog) InsertSysOperaLog(c *gin.Context) {
 }
 
 func (e *SysOperaLog) UpdateSysOperaLog(c *gin.Context) {
+	log := e.GetLogger(c)
 	control := new(dto.SysOperaLogControl)
-	db, err := tools.GetOrm(c)
+	db, err := e.GetOrm(c)
 	if err != nil {
 		log.Error(err)
 		return
 	}
 
-	msgID := tools.GenerateMsgIDFromContext(c)
 	//更新操作
 	err = control.Bind(c)
 	if err != nil {
@@ -132,11 +131,11 @@ func (e *SysOperaLog) UpdateSysOperaLog(c *gin.Context) {
 		e.Error(c, http.StatusInternalServerError, err, "模型生成失败")
 		return
 	}
-	object.SetUpdateBy(tools.GetUserId(c))
+	object.SetUpdateBy(user.GetUserId(c))
 
 	serviceSysOperaLog := service.SysOperaLog{}
 	serviceSysOperaLog.Orm = db
-	serviceSysOperaLog.MsgID = msgID
+	serviceSysOperaLog.Log = log
 	err = serviceSysOperaLog.UpdateSysOperaLog(object)
 	if err != nil {
 		log.Error(err)
@@ -146,25 +145,25 @@ func (e *SysOperaLog) UpdateSysOperaLog(c *gin.Context) {
 }
 
 func (e *SysOperaLog) DeleteSysOperaLog(c *gin.Context) {
+	log := e.GetLogger(c)
 	control := new(dto.SysOperaLogById)
-	db, err := tools.GetOrm(c)
+	db, err := e.GetOrm(c)
 	if err != nil {
 		log.Error(err)
 		return
 	}
 
-	msgID := tools.GenerateMsgIDFromContext(c)
 	//删除操作
 	err = control.Bind(c)
 	if err != nil {
-		log.Errorf("MsgID[%s] Bind error: %s", msgID, err)
+		log.Errorf("Bind error: %s", err)
 		e.Error(c, http.StatusUnprocessableEntity, err, "参数验证失败")
 		return
 	}
 
 	serviceSysOperaLog := service.SysOperaLog{}
 	serviceSysOperaLog.Orm = db
-	serviceSysOperaLog.MsgID = msgID
+	serviceSysOperaLog.Log = log
 	err = serviceSysOperaLog.RemoveSysOperaLog(control)
 	if err != nil {
 		log.Error(err)

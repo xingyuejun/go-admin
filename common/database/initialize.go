@@ -1,20 +1,20 @@
 package database
 
 import (
-	. "log"
 	"time"
 
-	logCore "github.com/go-admin-team/go-admin-core/logger"
+	log "github.com/go-admin-team/go-admin-core/logger"
+	"github.com/go-admin-team/go-admin-core/sdk"
+	toolsConfig "github.com/go-admin-team/go-admin-core/sdk/config"
+	"github.com/go-admin-team/go-admin-core/sdk/pkg"
+	mycasbin "github.com/go-admin-team/go-admin-core/sdk/pkg/casbin"
 	toolsDB "github.com/go-admin-team/go-admin-core/tools/database"
+	. "github.com/go-admin-team/go-admin-core/tools/gorm/logger"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
 	"gorm.io/gorm/schema"
 
 	"go-admin/common/global"
-	"go-admin/common/log"
-	mycasbin "go-admin/pkg/casbin"
-	"go-admin/tools"
-	toolsConfig "go-admin/tools/config"
 )
 
 // Setup 配置数据库
@@ -28,7 +28,7 @@ func setupSimpleDatabase(host string, c *toolsConfig.Database) {
 	if global.Driver == "" {
 		global.Driver = c.Driver
 	}
-	log.Infof("%s => %s", host, tools.Green(c.Source))
+	log.Infof("%s => %s", host, pkg.Green(c.Source))
 	registers := make([]toolsDB.ResolverConfigure, len(c.Registers))
 	for i := range c.Registers {
 		registers[i] = toolsDB.NewResolverConfigure(
@@ -42,29 +42,28 @@ func setupSimpleDatabase(host string, c *toolsConfig.Database) {
 		NamingStrategy: schema.NamingStrategy{
 			SingularTable: true,
 		},
-		Logger: logger.New(
-			New(logCore.DefaultLogger.Options().Out, "\r\n", LstdFlags),
+		Logger: New(
 			logger.Config{
 				SlowThreshold: time.Second,
 				Colorful:      true,
 				LogLevel: logger.LogLevel(
-					logCore.DefaultLogger.Options().Level.LevelForGorm()),
+					log.DefaultLogger.Options().Level.LevelForGorm()),
 			},
 		),
 	}, opens[c.Driver])
 
 	if err != nil {
-		log.Fatal(tools.Red(c.Driver+" connect error :"), err)
+		log.Fatal(pkg.Red(c.Driver+" connect error :"), err)
 	} else {
-		log.Info(tools.Green(c.Driver + " connect success !"))
+		log.Info(pkg.Green(c.Driver + " connect success !"))
 	}
 
 	e := mycasbin.Setup(db, "sys_")
 
-	if host == "*" {
-		global.Eloquent = db
-	}
+	//if host == "*" {
+	//	global.Eloquent = db
+	//}
 
-	global.Cfg.SetDb(host, db)
-	global.Cfg.SetCasbin(host, e)
+	sdk.Runtime.SetDb(host, db)
+	sdk.Runtime.SetCasbin(host, e)
 }

@@ -2,12 +2,13 @@ package dto
 
 import (
 	"encoding/json"
+
 	"github.com/gin-gonic/gin"
 	"github.com/gin-gonic/gin/binding"
-	"go-admin/app/admin/models"
+	"github.com/go-admin-team/go-admin-core/sdk/api"
+
+	"go-admin/app/admin/models/system"
 	"go-admin/common/dto"
-	"go-admin/common/log"
-	"go-admin/tools"
 )
 
 // SysConfigSearch 列表或者搜索使用结构体
@@ -30,10 +31,10 @@ func (m *SysDeptSearch) GetNeedSearch() interface{} {
 
 // Bind 映射上下文中的结构体数据
 func (m *SysDeptSearch) Bind(ctx *gin.Context) error {
-	msgID := tools.GenerateMsgIDFromContext(ctx)
+	log := api.GetRequestLogger(ctx)
 	err := ctx.ShouldBind(m)
 	if err != nil {
-		log.Debugf("MsgID[%s] ShouldBind error: %s", msgID, err.Error())
+		log.Debugf("ShouldBind error: %s", err.Error())
 	}
 	return err
 }
@@ -53,28 +54,28 @@ type SysDeptControl struct {
 
 // Bind 映射上下文中的结构体数据
 func (s *SysDeptControl) Bind(ctx *gin.Context) error {
-	msgID := tools.GenerateMsgIDFromContext(ctx)
+	log := api.GetRequestLogger(ctx)
 	err := ctx.ShouldBindUri(s)
 	if err != nil {
-		log.Debugf("MsgID[%s] ShouldBindUri error: %s", msgID, err.Error())
+		log.Debugf("ShouldBindUri error: %s", err.Error())
 		return err
 	}
 	err = ctx.ShouldBindBodyWith(s, binding.JSON)
 	if err != nil {
-		log.Debugf("MsgID[%s] ShouldBind error: %#v", msgID, err.Error())
+		log.Debugf("ShouldBind error: %s", err.Error())
 	}
 	var jsonStr []byte
 	jsonStr, err = json.Marshal(s)
 	if err != nil {
-		log.Debugf("MsgID[%s] ShouldBind error: %#v", msgID, err.Error())
+		log.Debugf("ShouldBind error: %s", err.Error())
 	}
 	ctx.Set("body", string(jsonStr))
 	return err
 }
 
 // Generate 结构体数据转化 从 SysConfigControl 至 system.SysConfig 对应的模型
-func (s *SysDeptControl) Generate() (*models.SysDept, error) {
-	return &models.SysDept{
+func (s *SysDeptControl) Generate() (*system.SysDept, error) {
+	return &system.SysDept{
 		DeptId:   s.DeptId,
 		DeptName: s.DeptName,
 		ParentId: s.ParentId,
@@ -108,21 +109,21 @@ func (s *SysDeptById) GetId() interface{} {
 }
 
 func (s *SysDeptById) Bind(ctx *gin.Context) error {
-	msgID := tools.GenerateMsgIDFromContext(ctx)
+	log := api.GetRequestLogger(ctx)
 	err := ctx.ShouldBindUri(s)
 	if err != nil {
-		log.Debugf("MsgID[%s] ShouldBindUri error: %s", msgID, err.Error())
+		log.Debugf("ShouldBindUri error: %s", err.Error())
 		return err
 	}
 	err = ctx.ShouldBind(s)
 	if err != nil {
-		log.Debugf("MsgID[%s] ShouldBind error: %#v", msgID, err.Error())
+		log.Debugf("ShouldBind error: %s", err.Error())
 	}
 	return err
 }
 
-func (s *SysDeptById) GenerateM() (*models.SysDept, error) {
-	return &models.SysDept{}, nil
+func (s *SysDeptById) GenerateM() (*system.SysDept, error) {
+	return &system.SysDept{}, nil
 }
 
 type DeptLabel struct {
