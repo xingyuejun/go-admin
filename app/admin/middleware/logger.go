@@ -1,48 +1,72 @@
 package middleware
 
 import (
+	"encoding/json"
+	"fmt"
+	"net/http"
 	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/go-admin-team/go-admin-core/sdk/api"
+	"github.com/go-admin-team/go-admin-core/sdk/config"
+	"github.com/go-admin-team/go-admin-core/sdk/pkg"
+	"github.com/go-admin-team/go-admin-core/sdk/pkg/jwtauth/user"
+	"github.com/go-admin-team/go-admin-core/sdk/pkg/response"
 
 	"go-admin/app/admin/models"
 	"go-admin/app/admin/models/system"
 	"go-admin/app/admin/service"
-	"go-admin/common/global"
-	"go-admin/common/log"
-	"go-admin/tools"
-	"go-admin/tools/config"
 )
 
 // LoggerToFile 日志记录到文件
 func LoggerToFile() gin.HandlerFunc {
-
 	return func(c *gin.Context) {
 		// 开始时间
 		startTime := time.Now()
-
 		// 处理请求
-		c.Next()
 
+		c.Next()
 		// 结束时间
 		endTime := time.Now()
+		if c.Request.Method == http.MethodOptions {
+			return
+		}
+		log := api.GetRequestLogger(c)
 
-		// 执行时间
-		latencyTime := endTime.Sub(startTime)
+		bd, bl := c.Get("body")
+		var body = ""
+		if bl {
+			body = bd.(string)
+		}
+
+		rt, bl := c.Get("result")
+		var result = ""
+		if bl {
+			rb, err := json.Marshal(rt)
+			if err != nil {
+				log.Warnf("json Marshal result error, %s", err.Error())
+			} else {
+				result = string(rb)
+			}
+		}
+
+		st, bl := c.Get("status")
+		var statusBus = 0
+		if bl {
+			statusBus = st.(int)
+		}
 
 		// 请求方式
 		reqMethod := c.Request.Method
-
 		// 请求路由
 		reqUri := c.Request.RequestURI
-
 		// 状态码
 		statusCode := c.Writer.Status()
-
 		// 请求IP
 		clientIP := c.ClientIP()
-
+		// 执行时间
+		latencyTime := endTime.Sub(startTime)
 		// 日志格式
 		logData := map[string]interface{}{
 			"statusCode":  statusCode,
@@ -52,27 +76,36 @@ func LoggerToFile() gin.HandlerFunc {
 			"uri":         reqUri,
 		}
 		log.Info(logData)
-		global.RequestLogger.Info(logData)
-
+		//l := logger.Logger{Logger: log.Fields(logData)}
+		//l.Info(logData)
 		if c.Request.Method != "GET" && c.Request.Method != "OPTIONS" && config.LoggerConfig.EnabledDB {
-			SetDBOperLog(c, clientIP, statusCode, reqUri, reqMethod, latencyTime)
+			SetDBOperLog(c, clientIP, statusCode, reqUri, reqMethod, latencyTime, body, result, statusBus)
 		}
 	}
 }
 
 // SetDBOperLog 写入操作日志表 fixme 该方法后续即将弃用
-func SetDBOperLog(c *gin.Context, clientIP string, statusCode int, reqUri string, reqMethod string, latencyTime time.Duration) {
+func SetDBOperLog(c *gin.Context, clientIP string, statusCode int, reqUri string, reqMethod string, latencyTime time.Duration, body string, result string, status int) {
+	log := api.GetRequestLogger(c)
+	db, err := pkg.GetOrm(c)
+	if err != nil {
+		log.Errorf("get db connection error, %s", err.Error())
+		response.Error(c, http.StatusInternalServerError, err, "数据库连接获取失败")
+		return
+	}
+
 	menu := models.Menu{}
 	menu.Path = reqUri
 	menu.Action = reqMethod
-	menuList, _ := menu.Get()
+	menuList, _ := menu.Get(db)
 	sysOperaLog := system.SysOperaLog{}
 	sysOperaLog.OperIp = clientIP
-	sysOperaLog.OperLocation = tools.GetLocation(clientIP)
-	sysOperaLog.Status = tools.IntToString(statusCode)
-	sysOperaLog.OperName = tools.GetUserName(c)
+	sysOperaLog.OperLocation = pkg.GetLocation(clientIP)
+	sysOperaLog.Status = pkg.IntToString(statusCode)
+	sysOperaLog.OperName = user.GetUserName(c)
 	sysOperaLog.RequestMethod = c.Request.Method
 	sysOperaLog.OperUrl = reqUri
+	sysOperaLog.OperParam = body
 	if reqUri == "/login" {
 		sysOperaLog.BusinessType = "10"
 		sysOperaLog.Title = "用户登录"
@@ -95,23 +128,19 @@ func SetDBOperLog(c *gin.Context, clientIP string, statusCode int, reqUri string
 	if len(menuList) > 0 {
 		sysOperaLog.Title = menuList[0].Title
 	}
-	b, _ := c.Get("body")
-	sysOperaLog.OperParam, _ = tools.StructToJsonStr(b)
-	sysOperaLog.CreateBy = tools.GetUserIdUint(c)
-	sysOperaLog.OperTime = tools.GetCurrentTime()
-	sysOperaLog.LatencyTime = (latencyTime).String()
+	sysOperaLog.CreateBy = user.GetUserId(c)
+	sysOperaLog.OperTime = pkg.GetCurrentTime()
+	sysOperaLog.LatencyTime = fmt.Sprintf("%v", latencyTime)
+
+	sysOperaLog.JsonResult = result
 	sysOperaLog.UserAgent = c.Request.UserAgent()
-	if c.Err() == nil {
-		sysOperaLog.Status = "0"
+	if status == 200 {
+		sysOperaLog.Status = "2"
 	} else {
 		sysOperaLog.Status = "1"
 	}
-	msgID := tools.GenerateMsgIDFromContext(c)
-	db, err := tools.GetOrm(c)
-	if err != nil {
-		log.Errorf("msgID[%s] 获取Orm失败, error:%s", msgID, err)
-	}
 	serviceOperaLog := service.SysOperaLog{}
 	serviceOperaLog.Orm = db
-	_ = serviceOperaLog.InsertSysOperaLog(sysOperaLog.Generate())
+	serviceOperaLog.Log = log
+	_ = serviceOperaLog.InsertSysOperaLog(&sysOperaLog)
 }

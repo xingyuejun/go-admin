@@ -213,7 +213,7 @@ npm run dev
 ## 🎬 在线体验
 > admin  /  123456
 
-演示地址：[http://www.zhangwj.com](http://www.zhangwj.com/#/login)
+演示地址：[http://www.go-admin.dev](http://www.go-admin.dev/#/login)
 
 
 ## 📨 互动
@@ -230,18 +230,33 @@ npm run dev
     <td><a target="_blank" href="https://shang.qq.com/wpa/qunwpa?idkey=0f2bf59f5f2edec6a4550c364242c0641f870aa328e468c4ee4b7dbfb392627b"><img border="0" src="https://pub.idqqimg.com/wpa/images/group.png" alt="go-admin技术交流乙号" title="go-admin技术交流乙号"></a></td>
   </tr>
 </table>
-  
+
+## 💎 主要成员
+
+<a href="https://github.com/wenjianzhang"> <img src="https://avatars.githubusercontent.com/u/3890175?s=460&u=20eac63daef81588fbac611da676b99859319251&v=4" width="80px"></a>
+<a href="https://github.com/lwnmengjing"> <img src="https://avatars.githubusercontent.com/u/12806223?s=400&u=a89272dce50100b77b4c0d5c81c718bf78ebb580&v=4" width="80px"></a>
+<a href="https://github.com/chengxiao"> <img src="https://avatars.githubusercontent.com/u/1379545?s=460&u=557da5503d0ac4a8628df6b4075b17853d5edcd9&v=4" width="80px"></a>
+<a href="https://github.com/bing127"> <img src="https://avatars.githubusercontent.com/u/31166183?s=460&u=c085bff88df10bb7676c8c0351ba9dcd031d1fb3&v=4" width="80px"></a>
+
+
+
+## JetBrains 开源证书支持
+
+`go-admin` 项目一直以来都是在 JetBrains 公司旗下的 GoLand 集成开发环境中进行开发，基于 **free JetBrains Open Source license(s)** 正版免费授权，在此表达我的谢意。
+
+<a href="https://www.jetbrains.com/?from=kubeadm-ha" target="_blank"><img src="https://raw.githubusercontent.com/panjf2000/illustrations/master/jetbrains/jetbrains-variant-4.png" width="250" align="middle"/></a>
+
 
 ## 🤝 特别感谢
-[chengxiao](https://github.com/chengxiao)
-[gin](https://github.com/gin-gonic/gin)
-[casbin](https://github.com/casbin/casbin)
-[spf13/viper](https://github.com/spf13/viper)
-[gorm](https://github.com/jinzhu/gorm)
-[gin-swagger](https://github.com/swaggo/gin-swagger)
-[jwt-go](https://github.com/dgrijalva/jwt-go)
-[vue-element-admin](https://github.com/PanJiaChen/vue-element-admin)
-[ruoyi-vue](https://gitee.com/y_project/RuoYi-Vue)
+1. [chengxiao](https://github.com/chengxiao)
+2. [gin](https://github.com/gin-gonic/gin)
+2. [casbin](https://github.com/casbin/casbin)
+2. [spf13/viper](https://github.com/spf13/viper)
+2. [gorm](https://github.com/jinzhu/gorm)
+2. [gin-swagger](https://github.com/swaggo/gin-swagger)
+2. [jwt-go](https://github.com/dgrijalva/jwt-go)
+2. [vue-element-admin](https://github.com/PanJiaChen/vue-element-admin)
+2. [ruoyi-vue](https://gitee.com/y_project/RuoYi-Vue)
 
 ## 🤟 打赏
 
@@ -256,9 +271,11 @@ npm run dev
 
 zhuqiyun LLL狐 星星之火 cjj770 Sam 唐*i 晓聪 aLong *渊 海马 魏镇坪 + 111 *哥 我的宇哥哥 *声 *节
 
+## 🤝 链接
+[Go开发者成长线路图](http://www.golangroadmap.com/)
+
 ## 🔑 License
 
 [MIT](https://github.com/go-admin-team/go-admin/blob/master/LICENSE.md)
 
 Copyright (c) 2020 wenjianzhang
-
